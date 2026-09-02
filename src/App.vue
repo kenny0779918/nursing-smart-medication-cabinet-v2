@@ -30,7 +30,6 @@ onBeforeUnmount(()=>{ ['click','keydown','mousemove','touchstart'].forEach(event
       <div class="scan-title-icon">▤</div><h1>請刷讀人員識別證</h1><p class="scan-subtitle">請將員工識別證條碼對準條碼機掃描，進行身分驗證</p>
       <div class="scanner-illustration"><div class="scanner-gun">▰</div><div class="laser"></div><div class="id-card"><span>●</span><b>▤</b><em>▥▥▥▥▥</em></div></div>
       <form class="barcode-form" @submit.prevent="loginByBarcode()"><label for="barcode">Barcode輸入</label><div><input id="barcode" v-model="barcode" autocomplete="off" autofocus placeholder="掃描後自動登入，或輸入測試條碼"><button>驗證</button></div></form>
-      <div class="hint-box">💡 <strong>小提醒：</strong>請使用有效的員工識別證進行掃描</div><p class="safety-note">♢ 如需取消，請按「取藥後請關閉藥櫃」流程返回首頁</p>
       <div class="prototype-tools"><span>Prototype測試：</span><button @click="loginByBarcode('N001162')">護理人員</button><button @click="loginByBarcode('S000888')">護理主管</button><button class="denied" @click="loginByBarcode('INVALID')">無權限人員</button></div>
     </section></main>
     <main v-else-if="page==='denied'" class="auth-page"><section class="denied-card"><div class="denied-icon">!</div><p class="eyebrow">身分驗證失敗</p><h1>人員無操作權限</h1><p>{{ errorMessage }}</p><div class="countdown">{{ returnCountdown }}秒後自動返回識別證刷讀畫面</div></section></main>
