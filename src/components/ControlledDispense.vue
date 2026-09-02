@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import RoutineDispense from './RoutineDispense.vue'
+import OwnMedicationDispense from './OwnMedicationDispense.vue'
 
 defineProps({ operator: Object })
 const emit = defineEmits(['back', 'busy'])
@@ -33,6 +34,7 @@ const progressText = computed(() => `${Math.min(currentIndex.value + 1, medicine
 
 function chooseControlled(){ view.value='prescription' }
 function chooseRoutine(){ view.value='routine' }
+function chooseOwnMedication(){ view.value='own-medication' }
 function verifySupervisor(code=supervisorCode.value){
   supervisorError.value=''
   if(code.trim().toUpperCase()!=='S000888'){
@@ -99,7 +101,7 @@ function statusLabel(status){ return status==='done'?'已完成':status==='proce
 
 <template>
   <main class="module-page">
-    <div v-if="view!=='routine'" class="module-head">
+    <div v-if="view!=='routine' && view!=='own-medication'" class="module-head">
       <div><button class="text-back" @click="view==='categories' ? emit('back') : resetToCategories()">‹ 返回</button><p>取藥作業</p><h1>{{ view==='categories' ? '請選擇取藥類型' : '管制藥取藥' }}</h1></div>
       <div v-if="supervisor" class="verified-badge">✓ 二次驗證：{{ supervisor.name }}（{{ supervisor.employeeId }}）</div>
     </div>
@@ -107,10 +109,11 @@ function statusLabel(status){ return status==='done'?'已完成':status==='proce
     <section v-if="view==='categories'" class="dispense-types">
       <button class="type-card featured" @click="chooseControlled"><span class="type-icon">Rx</span><b>管制藥取藥</b><small>需護理主管二次驗證</small><i>開始作業 →</i></button>
       <button class="type-card featured" @click="chooseRoutine"><span class="type-icon">＋</span><b>常備藥取藥</b><small>領取院內常備藥品</small><i>開始作業 →</i></button>
-      <button class="type-card" disabled><span class="type-icon">▣</span><b>病人自備藥取藥</b><small>後續模組開放</small></button>
+      <button class="type-card featured" @click="chooseOwnMedication"><span class="type-icon">▣</span><b>病人自備藥取藥</b><small>領取已入庫的病人自備藥</small><i>開始作業 →</i></button>
     </section>
 
     <RoutineDispense v-else-if="view==='routine'" @back="resetToCategories" @busy="emit('busy',$event)" />
+    <OwnMedicationDispense v-else-if="view==='own-medication'" :operator="operator" @back="resetToCategories" @busy="emit('busy',$event)" />
 
     <section v-else-if="view==='prescription'" class="workflow-card verify-card">
       <div class="stepper"><span class="active">1</span><i></i><span>2</span><i></i><span>3</span></div>

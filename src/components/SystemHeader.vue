@@ -7,7 +7,7 @@ let clockTimer
 const dateTime = computed(() => new Intl.DateTimeFormat('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).format(now.value))
 onMounted(() => { clockTimer = window.setInterval(() => { now.value = new Date() }, 1000) })
 onBeforeUnmount(() => window.clearInterval(clockTimer))
-const statuses = ['資料庫連線','ADC控制器','Barcode Scanner']
+const statuses = ['溫溼度感器','櫃門感器','資料庫連線','ADC控制器','Barcode Scanner']
 </script>
 <template>
   <header class="system-header">
