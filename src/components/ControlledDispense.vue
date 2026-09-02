@@ -30,7 +30,7 @@ const medicines = ref([])
 const currentMedicine = computed(() => medicines.value[currentIndex.value])
 const progressText = computed(() => `${Math.min(currentIndex.value + 1, medicines.value.length)} / ${medicines.value.length}`)
 
-function chooseControlled(){ view.value='supervisor' }
+function chooseControlled(){ view.value='prescription' }
 function verifySupervisor(code=supervisorCode.value){
   supervisorError.value=''
   if(code.trim().toUpperCase()!=='S000888'){
@@ -39,7 +39,8 @@ function verifySupervisor(code=supervisorCode.value){
   }
   supervisor.value={ name:'王小美', employeeId:'0888', role:'護理人員主管' }
   supervisorCode.value=''
-  view.value='prescription'
+  view.value='dispensing'
+  startMedicine()
 }
 function fetchPrescription(code=prescriptionCode.value){
   prescriptionError.value=''
@@ -50,8 +51,7 @@ function fetchPrescription(code=prescriptionCode.value){
   medicines.value=prescription.medicines.map(item=>({...item,status:'pending'}))
   prescriptionCode.value=''
   currentIndex.value=0
-  view.value='dispensing'
-  startMedicine()
+  view.value='review'
 }
 function startMedicine(){
   const med=currentMedicine.value
@@ -90,7 +90,7 @@ function finishAll(){
 }
 function resetToCategories(){
   emit('busy',false)
-  view.value='categories'; supervisor.value=null; medicines.value=[]; completed.value=false
+  view.value='categories'; supervisor.value=null; supervisorCode.value=''; supervisorError.value=''; prescriptionCode.value=''; prescriptionError.value=''; medicines.value=[]; completed.value=false; printStatus.value='尚未列印'; drawerState.value='closed'; returnDrawerState.value='closed'
 }
 function statusLabel(status){ return status==='done'?'已完成':status==='processing'?'處理中':'待處理' }
 </script>
@@ -108,23 +108,26 @@ function statusLabel(status){ return status==='done'?'已完成':status==='proce
       <button class="type-card" disabled><span class="type-icon">▣</span><b>病人自備藥取藥</b><small>後續模組開放</small></button>
     </section>
 
-    <section v-else-if="view==='supervisor'" class="workflow-card verify-card">
-      <div class="stepper"><span class="active">1</span><i></i><span>2</span><i></i><span>3</span></div>
-      <div class="large-round-icon">♙</div><p class="overline">步驟 1／3</p><h2>護理主管二次驗證</h2><p>請由具管制藥驗證權限的護理主管刷讀人員識別證。</p>
-      <form class="module-form" @submit.prevent="verifySupervisor()"><label>主管識別證 Barcode</label><div><input v-model="supervisorCode" autofocus placeholder="請刷讀主管識別證"><button>驗證</button></div></form>
-      <p v-if="supervisorError" class="form-error">{{ supervisorError }}</p>
-      <div class="prototype-actions"><span>Prototype：</span><button @click="verifySupervisor('S000888')">模擬主管刷卡</button><button @click="verifySupervisor('N001162')">模擬無驗證權限</button></div>
-    </section>
-
     <section v-else-if="view==='prescription'" class="workflow-card verify-card">
-      <div class="stepper"><span class="done">✓</span><i class="done"></i><span class="active">2</span><i></i><span>3</span></div>
-      <div class="large-round-icon">▥</div><p class="overline">步驟 2／3</p><h2>請刷讀處方籤條碼</h2><p>系統將透過 HIS API 取得處方資料，並只顯示藥櫃內配置的藥品。</p>
+      <div class="stepper"><span class="active">1</span><i></i><span>2</span><i></i><span>3</span></div>
+      <div class="large-round-icon">▥</div><p class="overline">步驟 1／3</p><h2>請刷讀處方籤條碼</h2><p>系統將透過 HIS API 取得處方資料，並顯示藥櫃內配置的管制藥品，供主管核對。</p>
       <form class="module-form" @submit.prevent="fetchPrescription()"><label>處方籤 Barcode</label><div><input v-model="prescriptionCode" autofocus placeholder="請刷讀處方籤條碼"><button>查詢處方</button></div></form>
       <p v-if="prescriptionError" class="form-error">{{ prescriptionError }}</p>
       <div class="prototype-actions"><span>Prototype：</span><button @click="fetchPrescription('RX20251020001')">模擬刷讀處方</button><code>RX20251020001</code></div>
     </section>
 
+    <section v-else-if="view==='review'" class="review-layout">
+      <div class="stepper"><span class="done">✓</span><i class="done"></i><span class="active">2</span><i></i><span>3</span></div>
+      <div class="review-title"><p class="overline">步驟 2／3 · 管制藥取藥內容確認</p><h2>請主管核對病人及取藥內容</h2><p>確認以下資料無誤後，請刷主管識別證完成二次驗證。驗證通過前不會列印標籤或開啟藥盒。</p></div>
+      <div class="patient-strip review-patient"><div><span>病床</span><b>{{ prescription.bed }}</b></div><div><span>病人姓名</span><b>{{ prescription.patientName }}</b></div><div><span>病歷號</span><b>{{ prescription.patientId }}</b></div><div><span>處方單號</span><b>{{ prescription.rxNo }}</b></div></div>
+      <div class="review-grid">
+        <div class="review-medicines"><h3>本次管制藥取藥內容</h3><div v-for="med in medicines" :key="med.code" class="review-med-row"><div class="review-med-image" :class="med.kind"><span>{{ med.code }}</span></div><div><b>{{ med.chinese }}</b><small>{{ med.name }}</small><em>{{ med.code }}</em></div><dl><div><dt>應取數量</dt><dd>{{ med.qty }} {{ med.unit }}</dd></div><div><dt>藥盒位置</dt><dd>{{ med.drawer }} 號</dd></div><div><dt>空瓶回收</dt><dd>{{ med.requiresReturn ? '需要' : '不需要' }}</dd></div></dl></div></div>
+        <aside class="approval-card"><div class="approval-icon">♙</div><p class="overline">等待主管核准</p><h3>確認取藥內容</h3><p>本次共 {{ medicines.length }} 項管制藥。主管刷證代表已核對此病人、處方及藥品內容。</p><form class="module-form" @submit.prevent="verifySupervisor()"><label>主管識別證 Barcode</label><div><input v-model="supervisorCode" autofocus placeholder="請刷讀主管識別證"><button>確認核准</button></div></form><p v-if="supervisorError" class="form-error">{{ supervisorError }}</p><div class="prototype-actions"><span>Prototype：</span><button type="button" @click="verifySupervisor('S000888')">模擬主管核准</button><button type="button" @click="verifySupervisor('N001162')">模擬無權限</button></div></aside>
+      </div>
+    </section>
+
     <section v-else-if="view==='dispensing'" class="dispensing-layout">
+      <div class="stepper"><span class="done">✓</span><i class="done"></i><span class="done">✓</span><i class="done"></i><span class="active">3</span></div>
       <div class="patient-strip"><div><span>病床</span><b>{{ prescription.bed }}</b></div><div><span>病人姓名</span><b>{{ prescription.patientName }}</b></div><div><span>病歷號</span><b>{{ prescription.patientId }}</b></div><div><span>處方單號</span><b>{{ prescription.rxNo }}</b></div><div><span>標籤</span><b class="success-text">✓ {{ printStatus }}</b></div></div>
       <div class="main-med-card">
         <div class="med-photo" :class="currentMedicine.kind"><div class="drug-object"><span>{{ currentMedicine.code }}</span></div><small>藥品示意圖</small></div>
