@@ -47,7 +47,7 @@ function closeDrawer(){
   emit('busy',false); view.value='complete'
 }
 function backToList(){ validationError.value=''; selected.value=null; view.value='list' }
-function finish(){ backToList() }
+function finish(){ exitModule() }
 function exitModule(){ emit('busy',false); emit('back') }
 </script>
 
@@ -78,6 +78,6 @@ function exitModule(){ emit('busy',false); emit('back') }
       <div class="own-open-grid"><div class="large-med-image"><span>{{ selected.code }}</span><small>病人自備藥</small></div><div><p class="overline">目前取藥藥品</p><h2>{{ selected.medicine }}</h2><p>{{ selected.generic }}</p><dl><div><dt>本次取藥</dt><dd>{{ dispenseQty }} {{ selected.unit }}</dd></div><div><dt>取藥前庫存</dt><dd>{{ selected.stock }} {{ selected.unit }}</dd></div><div><dt>藥盒位置</dt><dd>{{ selected.drawer }} 號</dd></div></dl></div><aside><span class="live-dot"></span><small>取藥藥盒狀態</small><h3>{{ selected.drawer }} 號藥盒已開啟</h3><p>請取出 {{ dispenseQty }} {{ selected.unit }}病人自備藥，取出後請關閉藥盒。</p><button @click="closeDrawer">模擬關閉取藥盒</button></aside></div>
     </div>
 
-    <div v-else class="workflow-card complete-card"><div class="complete-icon">✓</div><p class="overline">作業完成</p><h2>病人自備藥取藥已完成</h2><p>{{ selected.patient }}的「{{ selected.medicine }}」已取出 {{ dispenseQty }} {{ selected.unit }}，{{ selected.drawer }} 號藥盒已關閉。</p><div class="own-result"><span>取藥後庫存</span><strong>{{ selected.stock }} {{ selected.unit }}</strong></div><div class="audit-summary"><span>自備藥入庫紀錄已關聯</span><span>取藥人員已記錄</span><span>庫存及藥盒事件已記錄</span></div><button class="primary-action" @click="finish">返回病人自備藥清單</button></div>
+    <div v-else class="workflow-card complete-card"><div class="complete-icon">✓</div><p class="overline">作業完成</p><h2>病人自備藥取藥已完成</h2><p>{{ selected.patient }}的「{{ selected.medicine }}」已取出 {{ dispenseQty }} {{ selected.unit }}，{{ selected.drawer }} 號藥盒已關閉。</p><div class="own-result"><span>取藥後庫存</span><strong>{{ selected.stock }} {{ selected.unit }}</strong></div><div class="audit-summary"><span>自備藥入庫紀錄已關聯</span><span>取藥人員已記錄</span><span>庫存及藥盒事件已記錄</span></div><button class="primary-action" @click="finish">返回取藥頁面</button></div>
   </section>
 </template>
